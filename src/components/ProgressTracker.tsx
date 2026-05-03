@@ -110,7 +110,7 @@ export function ProgressTracker() {
 
   React.useEffect(() => {
     fetch('/api/evolution/tasks')
-      .then(res => res.json())
+      .then(res => res.ok ? res.json() : [])
       .then(data => {
         if (Array.isArray(data)) {
           setTasks(data);

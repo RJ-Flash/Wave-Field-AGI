@@ -25,8 +25,8 @@ function AgentSidebarStatus() {
   useEffect(() => {
     const fetchStatus = () => {
       fetch('/api/agent-identity')
-        .then(r => r.json())
-        .then(data => setStatus(data))
+        .then(r => r.ok ? r.json() : null)
+        .then(data => data && setStatus(data))
         .catch(() => {});
     };
     fetchStatus();

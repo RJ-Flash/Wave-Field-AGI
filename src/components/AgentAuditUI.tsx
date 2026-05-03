@@ -8,9 +8,13 @@ export function AgentAuditUI() {
 
   useEffect(() => {
     fetch('/api/cognitive-loop/episodic')
-      .then(r => r.json())
+      .then(r => r.ok ? r.json() : [])
       .then(data => {
-        setLogs(data);
+        setLogs(Array.isArray(data) ? data : []);
+        setLoading(false);
+      })
+      .catch(() => {
+        setLogs([]);
         setLoading(false);
       });
   }, []);

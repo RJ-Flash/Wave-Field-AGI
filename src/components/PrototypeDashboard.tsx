@@ -24,7 +24,7 @@ export function PrototypeDashboard() {
 
   useEffect(() => {
     fetch('/api/cognitive-loop/episodic')
-      .then(res => res.json())
+      .then(res => res.ok ? res.json() : [])
       .then(data => {
         if (data && Array.isArray(data)) {
           setEpisodicCount(data.length);
@@ -33,7 +33,7 @@ export function PrototypeDashboard() {
       .catch((e) => console.log('Backend not wired yet or error', e));
 
     fetch('/api/scheduler/status')
-      .then(res => res.json())
+      .then(res => res.ok ? res.json() : { bgTickActive: false })
       .then(data => setIsCronActive(data.bgTickActive))
       .catch(() => {});
   }, []);

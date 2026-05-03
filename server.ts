@@ -307,42 +307,137 @@ async function startServer() {
     try {
       const nodes: any[] = [];
       const edges: any[] = [];
-      const nodeMap = new Set<string>();
+      const nodeMap = new Map<string, any>();
 
-      async function scanDir(dirPath: string) {
+      const foldersToScan = [
+        { path: WORKSPACE_DIR, group: 'workspace' },
+        { path: path.join(process.cwd(), 'src'), group: 'frontend' },
+        { path: path.join(process.cwd(), 'lib'), group: 'core' }
+      ];
+
+      async function scanDir(dirPath: string, group: string) {
         if (!existsSync(dirPath)) return;
         const entries = await fs.readdir(dirPath, { withFileTypes: true });
         for (const entry of entries) {
+          const fullPath = path.join(dirPath, entry.name);
           if (entry.isDirectory()) {
-            await scanDir(path.join(dirPath, entry.name));
-          } else if (entry.isFile() && entry.name.endsWith('.md')) {
-            const filePath = path.join(dirPath, entry.name);
-            const relPath = path.relative(WORKSPACE_DIR, filePath);
-            const baseName = entry.name;
-            const content = await fs.readFile(filePath, 'utf-8');
-            nodes.push({ id: relPath, label: baseName });
-            nodeMap.add(relPath);
+            if (entry.name !== 'node_modules' && entry.name !== 'dist' && !entry.name.startsWith('.')) {
+              await scanDir(fullPath, group);
+            }
+          } else if (entry.isFile()) {
+            const ext = path.extname(entry.name);
+            if (['.md', '.ts', '.tsx', '.js', '.css'].includes(ext)) {
+              const relPath = path.relative(process.cwd(), fullPath);
+              const stats = await fs.stat(fullPath);
+              const content = await fs.readFile(fullPath, 'utf-8');
+              
+              const node = {
+                id: relPath,
+                name: entry.name,
+                group,
+                size: stats.size,
+                type: ext.substring(1)
+              };
+              nodes.push(node);
+              nodeMap.set(relPath, node);
 
-            const linkRegex = /\[\[(.*?)\]\]|@([\w-]+(?:\.md)?)|\[.*?\]\((.*?\.md)\)/g;
-            let match;
-            while ((match = linkRegex.exec(content)) !== null) {
-               let target = match[1] || match[2] || match[3];
-               if (target) {
-                 if (!target.endsWith('.md')) target += '.md';
-                 edges.push({ source: relPath, target: target });
-               }
+              // Improved Link Detection
+              // 1. Markdown [[links]] and standard MD links
+              if (ext === '.md') {
+                const linkRegex = /\[\[(.*?)\]\]|@([\w-]+(?:\.md)?)|\[.*?\]\((.*?\.md)\)/g;
+                let match;
+                while ((match = linkRegex.exec(content)) !== null) {
+                  let target = match[1] || match[2] || match[3];
+                  if (target) {
+                    if (!target.endsWith('.md')) target += '.md';
+                    edges.push({ source: relPath, target });
+                  }
+                }
+              } 
+              // 2. Code imports/requires
+              else if (['.ts', '.tsx', '.js'].includes(ext)) {
+                const importRegex = /(?:import|from|require)\s*['"](.*?)['"]/g;
+                let match;
+                while ((match = importRegex.exec(content)) !== null) {
+                  let target = match[1];
+                  if (target && (target.startsWith('.') || target.startsWith('/'))) {
+                    // It's a local dependency
+                    edges.push({ source: relPath, target, isCode: true });
+                  }
+                }
+              }
             }
           }
         }
       }
-      await scanDir(WORKSPACE_DIR);
+
+      for (const fold of foldersToScan) {
+        await scanDir(fold.path, fold.group);
+      }
+
+      // Finalize server.ts node
+      const serverPath = 'server.ts';
+      if (existsSync(path.join(process.cwd(), serverPath))) {
+        const stats = await fs.stat(path.join(process.cwd(), serverPath));
+        const content = await fs.readFile(path.join(process.cwd(), serverPath), 'utf-8');
+        nodes.push({ id: serverPath, name: serverPath, group: 'server', size: stats.size, type: 'ts' });
+        nodeMap.set(serverPath, { id: serverPath });
+
+        const importRegex = /(?:import|from|require)\s*['"](.*?)['"]/g;
+        let match;
+        while ((match = importRegex.exec(content)) !== null) {
+           let target = match[1];
+           if (target && (target.startsWith('.') || target.startsWith('/'))) {
+             edges.push({ source: serverPath, target, isCode: true });
+           }
+        }
+      }
       
       const cleanEdges = edges.map(e => {
-         const matchingNode = Array.from(nodeMap).find(id => id.endsWith(e.target) || e.target.endsWith(id));
-         return matchingNode ? { source: e.source, target: matchingNode } : null;
+        let targetId = e.target;
+        
+        // Resolve targetId from relative imports
+        if (e.isCode) {
+           const dir = path.dirname(e.source);
+           let absoluteTarget = path.resolve(dir, e.target);
+           let targetRel = path.relative(process.cwd(), absoluteTarget);
+           
+           // Try common extensions
+           const extensions = ['', '.ts', '.tsx', '.js', '.md', '/index.ts', '/index.tsx'];
+           for (const ext of extensions) {
+             const candidate = targetRel + ext;
+             if (nodeMap.has(candidate)) {
+               targetId = candidate;
+               break;
+             }
+             // Handle cases like './lib/utils' mapping to 'lib/utils.ts'
+             if (nodeMap.has(candidate.replace(/\//g, path.sep))) {
+               targetId = candidate.replace(/\//g, path.sep);
+               break;
+             }
+           }
+        } else {
+           // Handle markdown link resolution (already somewhat handled by path.relative above, but let's be safe)
+           const candidates = Array.from(nodeMap.keys()).filter(id => id.endsWith(e.target));
+           if (candidates.length > 0) {
+             targetId = candidates[0];
+           }
+        }
+
+        if (nodeMap.has(targetId) && targetId !== e.source) {
+          return { source: e.source, target: targetId };
+        }
+        return null;
       }).filter(Boolean);
 
-      res.json({ nodes, edges: cleanEdges });
+      // Filter out duplicate edges
+      const uniqueEdges = cleanEdges.filter((edge, index, self) =>
+        index === self.findIndex((t) => (
+          t?.source === edge?.source && t?.target === edge?.target
+        ))
+      );
+
+      res.json({ nodes, edges: uniqueEdges });
     } catch (e: any) {
       res.status(500).json({ error: e.message });
     }
@@ -1394,6 +1489,21 @@ Output EXACTLY ONE valid JSON tool call. Format: { "tool": "writeFile", ... } or
     } catch (e) {
       res.json({ skills: [] });
     }
+  });
+
+  // --- API 404 Handler ---
+  // Ensure that all unmatched /api routes return JSON instead of falling through to the SPA HTML fallback
+  app.all('/api/*', (req, res) => {
+    res.status(404).json({ error: `API route not found: ${req.method} ${req.path}` });
+  });
+
+  // Global Error Handler for JSON responses
+  app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+    console.error("[System Error]:", err);
+    if (req.path.startsWith('/api/')) {
+      return res.status(500).json({ error: "Internal Server Error", message: err.message });
+    }
+    next(err);
   });
 
   // Vite middleware for development

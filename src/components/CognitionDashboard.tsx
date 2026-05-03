@@ -73,6 +73,8 @@ export function CognitionDashboard() {
     return () => clearInterval(interval);
   }, []);
 
+  const evolutionTasksArray = Array.isArray(evolutionTasks) ? evolutionTasks : [];
+
   return (
     <div className="h-full flex flex-col p-6 overflow-y-auto">
       <div className="mb-8">
@@ -162,7 +164,7 @@ export function CognitionDashboard() {
 
         {activeTab === 'evolution' && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-in slide-in-from-bottom-2 duration-300">
-            {evolutionTasks.map((task) => (
+            {evolutionTasksArray.map((task) => (
               <div 
                 key={task.id} 
                 className={`p-5 rounded-2xl border transition-all relative overflow-hidden group flex flex-col ${
