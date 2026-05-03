@@ -1,0 +1,14 @@
+{
+  "name": "Wave Field AGI",
+  "description": "An autonomous, self-improving AGI orchestrated via Folder-as-Workspace memory, recursive cognitive loops, and deep vector RAG substrate.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ],
+  "majorCapabilities": [
+    "Autonomous Code Execution",
+    "Self-Metacognition & Repair",
+    "Deep Vector Memory Pipeline",
+    "Multi-Agent Swarm Orchestration"
+  ]
+}

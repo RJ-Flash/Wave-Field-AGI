@@ -1,0 +1,172 @@
+import {
+  Brain,
+  Database,
+  GitBranch,
+  Layers,
+  Network,
+  RefreshCcw,
+  Zap,
+  Activity,
+  Globe,
+  Settings,
+} from 'lucide-react';
+
+export const SYSTEM_LAYERS = [
+  {
+    name: 'Perception Layer',
+    description: 'Converts text, code, documents, images, and structured data into a common internal state.',
+    icon: Activity,
+  },
+  {
+    name: 'Context Layer',
+    description: 'Wave Field LLM maintains long-range context and historical continuity.',
+    icon: Layers,
+  },
+  {
+    name: 'Working Memory',
+    description: 'Stores active task state, temporary notes, and current subgoals.',
+    icon: Database,
+  },
+  {
+    name: 'Planner',
+    description: 'Decomposes goals into steps and decides next actions.',
+    icon: GitBranch,
+  },
+  {
+    name: 'Router',
+    description: 'Selects the best specialist model for each subtask.',
+    icon: Network,
+  },
+  {
+    name: 'Executor',
+    description: 'Performs tool calls, code execution, file operations, and API use.',
+    icon: Zap,
+  },
+  {
+    name: 'Critic',
+    description: 'Checks outputs, catches errors, and triggers retries.',
+    icon: RefreshCcw,
+  },
+  {
+    name: 'Memory Manager',
+    description: 'Stores episodic, semantic, and procedural memory across sessions.',
+    icon: Brain,
+  },
+];
+
+export const PHASES = [
+  {
+    version: 'v1.0',
+    title: 'Core Engine',
+    goal: 'Prove the system can hold state, plan, and act across long tasks without falling apart.',
+    adds: [
+      'Canonical state object for goals, subtasks, memory, tools, and outcomes',
+      'Wave Field long-context engine for massive sequence retention',
+      'Simple planner that decomposes one user goal into steps',
+      'Router that picks which model or module handles each step',
+      'Tool executor for code, files, web, database, and APIs',
+      'Critic that checks if the step succeeded or needs retry',
+    ],
+    success: 'Completes multi-step tasks with persistence across long contexts better than a normal chatbot.',
+  },
+  {
+    version: 'v1',
+    title: 'Memory Brain',
+    goal: 'Give it persistent identity and memory across sessions.',
+    adds: [
+      'Working memory for active reasoning state',
+      'Episodic memory for interactions and experiences',
+      'Semantic memory for facts, concepts, and learned knowledge',
+      'Procedural memory for reusable skills and workflows',
+      'Memory ingestion, recall, summarization, and update pipelines',
+    ],
+    success: 'Remembers preferences, prior tasks, and project context accurately over time, not just within one conversation.',
+  },
+  {
+    version: 'v2',
+    title: 'Specialist Brain',
+    goal: 'Make it capable across domains by combining specialist models instead of forcing one model to do everything.',
+    adds: [
+      'Reasoning model',
+      'Coding model',
+      'Summarization model',
+      'Retrieval model',
+      'Multimodal model',
+      'Verification/critic model',
+      'Model capability registry and standardized adapter interface',
+    ],
+    success: 'Router reliably sends each subtask to the best specialist, and the system outperforms single-model prompting on mixed workloads.',
+  },
+  {
+    version: 'v3',
+    title: 'Cognitive Loop',
+    goal: 'Turn it into an iterative thinking system with plan → act → observe → revise behavior.',
+    adds: [
+      'Goal manager',
+      'Task graph builder',
+      'Reflection loop',
+      'Self-correction loop',
+      'Confidence scoring',
+      'Retry and backtrack logic',
+      'Skill library that grows from repeated use',
+    ],
+    success: 'Works on open-ended tasks for long periods, adjusts when wrong, and improves through iteration instead of collapsing after one generation.',
+  },
+  {
+    version: 'v4',
+    title: 'Learning Brain',
+    goal: 'Make it improve from experience rather than only from offline training.',
+    adds: [
+      'Trajectory logging',
+      'Success/failure labeling',
+      'Preference learning',
+      'Tool-use fine-tuning data generation',
+      'Curriculum learning from easy to hard tasks',
+      'Long-context training stages and memory-based adaptation',
+    ],
+    success: 'System becomes measurably better after repeated use, especially on workflows it sees often.',
+  },
+  {
+    version: 'v5',
+    title: 'World Model Brain',
+    goal: 'Give it predictive internal models of how tasks, tools, and environments behave.',
+    adds: [
+      'State transition modeling',
+      'Environment simulation',
+      'Outcome prediction',
+      'Scenario planning',
+      'Counterfactual reasoning',
+      'Multi-step consequence tracking',
+    ],
+    success: 'Predicts likely results before acting and chooses better plans, not just react.',
+  },
+  {
+    version: 'v6',
+    title: 'System Integration',
+    goal: 'Make the whole thing feel like one coherent AGI system rather than many disconnected parts.',
+    adds: [
+      'Orchestrator service',
+      'Plugin architecture',
+      'Config-driven workflows',
+      'Observability and trace logging',
+      'Evaluation harness for every version',
+      'Multi-agent collaboration when useful',
+    ],
+    success: 'New models, tools, and memory systems can be added without rewriting the whole stack.',
+  },
+];
+
+export const BUILD_SEQUENCE = [
+  'State schema',
+  'Wave Field core',
+  'Planner',
+  'Router',
+  'Tool executor',
+  'Critic',
+  'Persistent memory',
+  'Specialist adapters',
+  'Reflection loop',
+  'Learning pipeline',
+  'World model',
+  'Observability and eval harness',
+];
